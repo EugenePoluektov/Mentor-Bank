@@ -1,7 +1,13 @@
 package ru.mentorbank.backoffice.services.moneytransfer;
 
+import java.util.GregorianCalendar;
+
 import ru.mentorbank.backoffice.dao.OperationDao;
+import ru.mentorbank.backoffice.dao.exception.OperationDaoException;
+import ru.mentorbank.backoffice.model.Account;
+import ru.mentorbank.backoffice.model.Operation;
 import ru.mentorbank.backoffice.model.stoplist.JuridicalStopListRequest;
+import ru.mentorbank.backoffice.model.stoplist.PhysicalStopListRequest;
 import ru.mentorbank.backoffice.model.stoplist.StopListInfo;
 import ru.mentorbank.backoffice.model.stoplist.StopListStatus;
 import ru.mentorbank.backoffice.model.transfer.AccountInfo;
@@ -46,8 +52,7 @@ public class MoneyTransferServiceBean implements MoneyTransferService {
 				transferDo();
 				removeSuccessfulOperation();
 			} else
-				throw new TransferException(
-						"Невозможно сделать перевод. Необходимо ручное вмешательство.");
+				throw new TransferException("Невозможно сделать перевод. Необходимо ручное вмешательство.");
 		}
 
 		/**
@@ -63,9 +68,26 @@ public class MoneyTransferServiceBean implements MoneyTransferService {
 			dstStopListInfo = getStopListInfo(request.getDstAccount());
 		}
 
-		private void saveOperation() {
-			// TODO: Необходимо сделать вызов операции saveOperation и сделать
-			// соответствующий тест вызова операции operationDao.saveOperation()
+		private void saveOperation() throws TransferException {
+			Operation operation = new Operation();
+			Account srcAccount = new Account();
+			Account dstAccount = new Account();
+			srcAccount.setAccountNumber(request.getSrcAccount().getAccountNumber());
+			dstAccount.setAccountNumber(request.getDstAccount().getAccountNumber());
+			
+			operation.setCreateDate(GregorianCalendar.getInstance());
+			operation.setSrcAccount(srcAccount);
+			operation.setDstAccount(dstAccount);
+			operation.setSrcStoplistInfo(srcStopListInfo);
+			operation.setDstStoplistInfo(dstStopListInfo);
+			
+			try {
+				operationDao.saveOperation(operation);
+			} catch (OperationDaoException e) {
+				// TODO Auto-generated catch block
+				throw new TransferException("Failed to save operation in the database because of: " + e.getMessage());
+			}
+			
 		}
 
 		private void transferDo() throws TransferException {
@@ -84,13 +106,21 @@ public class MoneyTransferServiceBean implements MoneyTransferService {
 		private StopListInfo getStopListInfo(AccountInfo accountInfo) {
 			if (accountInfo instanceof JuridicalAccountInfo) {
 				JuridicalAccountInfo juridicalAccountInfo = (JuridicalAccountInfo) accountInfo;
-				JuridicalStopListRequest request = new JuridicalStopListRequest();
-				request.setInn(juridicalAccountInfo.getInn());
-				StopListInfo stopListInfo = stopListService
-						.getJuridicalStopListInfo(request);
+				JuridicalStopListRequest juridicalStopListRequest = new JuridicalStopListRequest();
+				juridicalStopListRequest.setInn(juridicalAccountInfo.getInn());
+				StopListInfo stopListInfo = stopListService.getJuridicalStopListInfo(juridicalStopListRequest);
 				return stopListInfo;
 			} else if (accountInfo instanceof PhysicalAccountInfo) {
-				// TODO: Сделать вызов stopListService для физических лиц
+
+				PhysicalAccountInfo physicalAccountInfo = (PhysicalAccountInfo) accountInfo;
+				PhysicalStopListRequest physicalStopListRequest = new PhysicalStopListRequest();
+				physicalStopListRequest.setFirstname(physicalAccountInfo.getFirstname());
+				physicalStopListRequest.setLastname(physicalAccountInfo.getLastname());
+				physicalStopListRequest.setMiddlename(physicalAccountInfo.getMiddlename());
+				physicalStopListRequest.setDocumentNumber(physicalAccountInfo.getDocumentNumber());
+				physicalStopListRequest.setDocumentSeries(physicalAccountInfo.getDocumentSeries());
+				StopListInfo stopListInfo = stopListService.getPhysicalStopListInfo(physicalStopListRequest);
+				return stopListInfo;
 			}
 			return null;
 		}

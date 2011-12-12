@@ -11,6 +11,12 @@ public class StopListServiceStub implements StopListService {
 	public static final String INN_FOR_OK_STATUS = "1111111111111";
 	public static final String INN_FOR_STOP_STATUS = "22222222222222";
 	public static final String INN_FOR_ASKSECURITY_STATUS = "33333333333333";
+	
+	public static final String DOCNUM_FOR_OK_STATUS = "1111111111111";
+	public static final String DOCNUM_FOR_STOP_STATUS = "22222222222222";
+	public static final String DOCNUM_FOR_ASKSECURITY_STATUS = "33333333333333";
+	
+	
 
 	@Override
 	public StopListInfo getJuridicalStopListInfo(
@@ -29,8 +35,16 @@ public class StopListServiceStub implements StopListService {
 
 	@Override
 	public StopListInfo getPhysicalStopListInfo(PhysicalStopListRequest request) {
-		//TODO: Реализовать
-		return null;
+		StopListInfo stopListInfo = new StopListInfo();
+		stopListInfo.setComment("Комментарий");
+		if (DOCNUM_FOR_OK_STATUS.equals(request.getDocumentNumber())){			
+			stopListInfo.setStatus(StopListStatus.OK);
+		} else if (DOCNUM_FOR_STOP_STATUS.equals(request.getDocumentNumber())) {
+			stopListInfo.setStatus(StopListStatus.STOP);			
+		} else {
+			stopListInfo.setStatus(StopListStatus.ASKSECURITY);			
+		}
+		return stopListInfo;
 	}
 
 }

@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import ru.mentorbank.backoffice.model.stoplist.JuridicalStopListRequest;
+import ru.mentorbank.backoffice.model.stoplist.PhysicalStopListRequest;
 import ru.mentorbank.backoffice.model.stoplist.StopListInfo;
 import ru.mentorbank.backoffice.model.stoplist.StopListStatus;
 import ru.mentorbank.backoffice.test.AbstractSpringTest;
@@ -17,10 +18,12 @@ public class StopListServiceStubTest extends AbstractSpringTest {
 	@Autowired
 	private StopListServiceStub stopListService;
 	private JuridicalStopListRequest stopListRequest;
+	private PhysicalStopListRequest stopListRequestPhys;
 
 	@Before
 	public void setUp() {
 		stopListRequest = new JuridicalStopListRequest();
+		stopListRequestPhys = new PhysicalStopListRequest();
 	}
 
 	@Test
@@ -44,4 +47,31 @@ public class StopListServiceStubTest extends AbstractSpringTest {
 		assertEquals(StopListStatus.STOP, info.getStatus());
 	}
 
+	/**
+	 * 
+	 */
+	@Test
+	public void getPhysicalStopListInfo_OK() {
+		stopListRequestPhys.setDocumentNumber(StopListServiceStub.DOCNUM_FOR_STOP_STATUS);
+		StopListInfo info = stopListService.getPhysicalStopListInfo(stopListRequestPhys);
+		assertNotNull("Информация должна быть заполнена", info);
+		assertEquals(StopListStatus.STOP, info.getStatus());
+	}
+	
+	@Test
+	public void getPhysicalStopListInfo_STOP() {
+		stopListRequestPhys.setDocumentNumber(StopListServiceStub.DOCNUM_FOR_OK_STATUS);
+		StopListInfo info = stopListService.getPhysicalStopListInfo(stopListRequestPhys);
+		assertNotNull("Информация должна быть заполнена", info);
+		assertEquals(StopListStatus.OK, info.getStatus());
+	}
+	
+	@Test
+	public void getPhysicalStopListInfo_ASK() {
+		stopListRequestPhys.setDocumentNumber(StopListServiceStub.DOCNUM_FOR_ASKSECURITY_STATUS);
+		StopListInfo info = stopListService.getPhysicalStopListInfo(stopListRequestPhys);
+		assertNotNull("Информация должна быть заполнена", info);
+		assertEquals(StopListStatus.ASKSECURITY, info.getStatus());
+	}
+	
 }
